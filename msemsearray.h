@@ -45,19 +45,24 @@
 #include <shared_mutex>
 #include <mutex>
 #include <algorithm>
-#include <iostream>
 #ifdef MSE_SELF_TESTS
 #include <string>
 #include <iterator>
 #endif // MSE_SELF_TESTS
 
+#ifndef MSE_DISABLE_IOSTREAM
+#include <iostream>
+#else
+#include <cassert>
+#endif
+
+
 #ifdef _MSC_VER
-#pragma warning( push )  
+#pragma warning( push )
 #pragma warning( disable : 4100 4456 4189 4505 )
 #endif /*_MSC_VER*/
 
 #ifdef MSE_CUSTOM_THROW_DEFINITION
-#include <iostream>
 #define MSE_THROW(x) MSE_CUSTOM_THROW_DEFINITION(x)
 #else // MSE_CUSTOM_THROW_DEFINITION
 #define MSE_THROW(x) throw(x)
@@ -870,8 +875,12 @@ namespace mse {
 				catch (...) {
 					/* It may not be safe to continue if the object is destroyed while the object state is locked (and presumably
 					in use) by another part of the code. */
+#ifndef MSE_DISABLE_IOSTREAM
 					std::cerr << "\n\nFatal Error: mse::destructor_lock_guard1() failed \n\n";
-					std::terminate();
+#else
+					assert(0 && "Fatal Error: mse::destructor_lock_guard1() failed");
+#endif
+
 				}
 			}
 			~destructor_lock_guard1() _NOEXCEPT {
@@ -6039,7 +6048,7 @@ namespace mse {
 		TAccessControlledPointer(TAccessControlledPointer&& src) = default; /* Note, the move constructor is only safe when std::move() is prohibited. */
 
 		/* This element is safely "async passable" if the _TAccessMutex is a suitable thread safe mutex. */
-		template<class _TAccessMutex2 = _TAccessMutex, class = typename std::enable_if<(std::is_same<_TAccessMutex2, _TAccessMutex>::value) 
+		template<class _TAccessMutex2 = _TAccessMutex, class = typename std::enable_if<(std::is_same<_TAccessMutex2, _TAccessMutex>::value)
 			&& (mse::impl::is_thread_safe_mutex_msemsearray<_TAccessMutex2>::value), void>::type>
 		void async_passable_tag() const {} /* Indication that this type is eligible to be passed between threads. */
 
@@ -6353,7 +6362,12 @@ namespace mse {
 					catch (...) {
 						/* It would be unsafe to allow this object to be destroyed as there are outstanding references to this object (in
 						this thread). */
-						std::cerr << "\n\nFatal Error: mse::us::impl::TAccessControlledObjBase<> destructed with outstanding references in the same thread \n\n";
+#ifndef MSE_DISABLE_IOSTREAM
+						std::cerr << "\n\nFatal Error: mse::TAccessControlledObjBase<> destructed with outstanding references in the same thread \n\n";
+#else
+						assert(0 && "Fatal Error: mse::TAccessControlledObjBase<> destructed with outstanding references in the same thread");
+#endif
+
 						std::terminate();
 					}
 
@@ -6658,7 +6672,12 @@ namespace mse {
 			catch (...) {
 				/* It would be unsafe to allow this object to be destroyed as there are outstanding references to this object (in
 				this thread). */
-				std::cerr << "\n\nFatal Error: mse::us::impl::TAccessControlledObjBase<> destructed with outstanding references in the same thread \n\n";
+#ifndef MSE_DISABLE_IOSTREAM
+				std::cerr << "\n\nFatal Error: mse::TAccessControlledObjBase<> destructed with outstanding references in the same thread \n\n";
+#else
+				assert(0 && "Fatal Error: mse::TAccessControlledObjBase<> destructed with outstanding references in the same thread");
+#endif
+
 				std::terminate();
 			}
 		}
@@ -7283,7 +7302,7 @@ namespace mse {
 #undef MSE_THROW
 
 #ifdef _MSC_VER
-#pragma warning( pop )  
+#pragma warning( pop )
 #endif /*_MSC_VER*/
 
 #endif /*ndef MSEMSEARRAY_H*/
